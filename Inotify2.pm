@@ -57,7 +57,7 @@ Linux::Inotify2 - scalable directory/file change notification
 =head1 DESCRIPTION
 
 This module implements an interface to the Linux 2.6.13 and later Inotify
-file/directory change notification sytem.
+file/directory change notification system.
 
 It has a number of advantages over the Linux::Inotify module:
 
@@ -84,7 +84,7 @@ use common::sense;
 use base 'Exporter';
 
 BEGIN {
-   our $VERSION = '1.21';
+   our $VERSION = '1.22';
    our @EXPORT = qw(
       IN_ACCESS IN_MODIFY IN_ATTRIB IN_CLOSE_WRITE
       IN_CLOSE_NOWRITE IN_OPEN IN_MOVED_FROM IN_MOVED_TO
@@ -102,11 +102,11 @@ BEGIN {
 =item my $inotify = new Linux::Inotify2
 
 Create a new notify object and return it. A notify object is kind of a
-container that stores watches on filesystem names and is responsible for
+container that stores watches on file system names and is responsible for
 handling event data.
 
-On error, C<undef> is returned and C<$!> will be set accordingly. The followign errors
-are documented:
+On error, C<undef> is returned and C<$!> will be set accordingly. The
+following errors are documented:
 
  ENFILE   The system limit on the total number of file descriptors has been reached.
  EMFILE   The user limit on the total number of inotify instances has been reached.
@@ -135,9 +135,9 @@ Add a new watcher to the given notifier. The watcher will create events
 on the pathname C<$name> as given in C<$mask>, which can be any of the
 following constants (all exported by default) ORed together.
 
-"file" refers to any filesystem object in the watch'ed object (always a
+"file" refers to any file system object in the watched object (always a
 directory), that is files, directories, symlinks, device nodes etc., while
-"object" refers to the object the watch has been set on itself:
+"object" refers to the object the watcher has been set on itself:
 
  IN_ACCESS            object was accessed
  IN_MODIFY            object was modified
@@ -211,8 +211,9 @@ sub watch {
 
 =item $inotify->fileno
 
-Returns the fileno for this notify object. You are responsible for calling
-the C<poll> method when this fileno becomes ready for reading.
+Returns the file descriptor for this notify object. When in non-blocking
+mode, you are responsible for calling the C<poll> method when this file
+descriptor becomes ready for reading.
 
 =cut
 
@@ -234,10 +235,10 @@ sub blocking {
 
 =item $count = $inotify->poll
 
-Reads events from the kernel and handles them. If the notify fileno is
-blocking (the default), then this method waits for at least one event
-(and thus returns true unless an error occurs). Otherwise it returns
-immediately when no pending events could be read.
+Reads events from the kernel and handles them. If the notify file
+descriptor is blocking (the default), then this method waits for at least
+one event (and thus returns true unless an error occurs). Otherwise it
+returns immediately when no pending events could be read.
 
 Returns the count of events that have been handled.
 
@@ -247,11 +248,15 @@ sub poll {
    scalar &read
 }
 
-=item $count = $inotify->read
+=item @events = $inotify->read
 
-Reads events from the kernel. Blocks in blocking mode (default) until any
-event arrives. Returns list of C<Linux::Inotify2::Event> objects or empty
-list if none (non-blocking mode) or error occured ($! should be checked).
+Reads events from the kernel. Blocks when the file descriptor is in
+blocking mode (default) until any event arrives. Returns list of
+C<Linux::Inotify2::Event> objects or empty list if none (non-blocking
+mode) or error occurred ($! should be checked).
+
+Normally you shouldn't use this function, but instead use watcher
+callbacks and call C<< ->poll >>.
 
 =cut
 
@@ -289,7 +294,7 @@ sub DESTROY {
 
 =head2 The Linux::Inotify2::Event Class
 
-Objects of this class are handed as first argument to the watch
+Objects of this class are handed as first argument to the watcher
 callback. It has the following members and methods:
 
 =over 4
@@ -304,35 +309,36 @@ The watcher object for this event.
 
 =item $event->{name}
 
-The path of the filesystem object, relative to the watch name.
+The path of the file system object, relative to the watched name.
 
-=item $watch->fullname
+=item $event->fullname
 
 Returns the "full" name of the relevant object, i.e. including the C<name>
-member of the watcher (if the the watch is on a directory and a dir entry
-is affected), or simply the C<name> member itself when the object is the
-watch object itself.
+member of the watcher (if the watch object is on a directory and a
+directory entry is affected), or simply the C<name> member itself when the
+object is the watch object itself.
 
 =item $event->mask
 
 =item $event->{mask}
 
-The received event mask. In addition the the events described for
-C<$inotify->watch>, the following flags (exported by default) can be set:
+The received event mask. In addition to the events described for C<<
+$inotify->watch >>, the following flags (exported by default) can be set:
 
  IN_ISDIR             event object is a directory
  IN_Q_OVERFLOW        event queue overflowed
 
  # when any of the following flags are set,
  # then watchers for this event are automatically canceled
- IN_UNMOUNT           filesystem for watch'ed object was unmounted
+ IN_UNMOUNT           filesystem for watched object was unmounted
  IN_IGNORED           file was ignored/is gone (no more events are delivered)
  IN_ONESHOT           only one event was generated
 
 =item $event->IN_xxx
 
-Returns a boolean that returns true if the event mask matches the
-event. All of the C<IN_xxx> constants can be used as methods.
+Returns a boolean that returns true if the event mask contains any events
+specified by the mask. All of the C<IN_xxx> constants can be used as
+methods.
 
 =item $event->cookie
 
@@ -363,12 +369,12 @@ sub fullname {
 for my $name (@Linux::Inotify2::EXPORT) {
    my $mask = &{"Linux::Inotify2::$name"};
 
-   *$name = sub { ($_[0]{mask} & $mask) == $mask };
+   *$name = sub { $_[0]{mask} & $mask };
 }
 
 =head2 The Linux::Inotify2::Watch Class
 
-Watch objects are created by calling the C<watch> method of a notifier.
+Watcher objects are created by calling the C<watch> method of a notifier.
 
 It has the following members and methods:
 
@@ -396,7 +402,7 @@ The callback as specified in the C<watch> call. Can optionally be changed.
 
 =item $watch->cancel
 
-Cancels/removes this watch. Future events, even if already queued queued,
+Cancels/removes this watcher. Future events, even if already queued queued,
 will not be handled and resources will be freed.
 
 =back

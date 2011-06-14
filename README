@@ -52,7 +52,7 @@ SYNOPSIS
 
 DESCRIPTION
     This module implements an interface to the Linux 2.6.13 and later
-    Inotify file/directory change notification sytem.
+    Inotify file/directory change notification system.
 
     It has a number of advantages over the Linux::Inotify module:
 
@@ -65,11 +65,11 @@ DESCRIPTION
   The Linux::Inotify2 Class
     my $inotify = new Linux::Inotify2
         Create a new notify object and return it. A notify object is kind of
-        a container that stores watches on filesystem names and is
+        a container that stores watches on file system names and is
         responsible for handling event data.
 
         On error, "undef" is returned and $! will be set accordingly. The
-        followign errors are documented:
+        following errors are documented:
 
          ENFILE   The system limit on the total number of file descriptors has been reached.
          EMFILE   The user limit on the total number of inotify instances has been reached.
@@ -85,9 +85,9 @@ DESCRIPTION
         events on the pathname $name as given in $mask, which can be any of
         the following constants (all exported by default) ORed together.
 
-        "file" refers to any filesystem object in the watch'ed object
+        "file" refers to any file system object in the watched object
         (always a directory), that is files, directories, symlinks, device
-        nodes etc., while "object" refers to the object the watch has been
+        nodes etc., while "object" refers to the object the watcher has been
         set on itself:
 
          IN_ACCESS            object was accessed
@@ -139,30 +139,34 @@ DESCRIPTION
            });
 
     $inotify->fileno
-        Returns the fileno for this notify object. You are responsible for
-        calling the "poll" method when this fileno becomes ready for
-        reading.
+        Returns the file descriptor for this notify object. When in
+        non-blocking mode, you are responsible for calling the "poll" method
+        when this file descriptor becomes ready for reading.
 
     $inotify->blocking ($blocking)
         Clears ($blocking true) or sets ($blocking false) the "O_NONBLOCK"
         flag on the file descriptor.
 
     $count = $inotify->poll
-        Reads events from the kernel and handles them. If the notify fileno
-        is blocking (the default), then this method waits for at least one
-        event (and thus returns true unless an error occurs). Otherwise it
-        returns immediately when no pending events could be read.
+        Reads events from the kernel and handles them. If the notify file
+        descriptor is blocking (the default), then this method waits for at
+        least one event (and thus returns true unless an error occurs).
+        Otherwise it returns immediately when no pending events could be
+        read.
 
         Returns the count of events that have been handled.
 
-    $count = $inotify->read
-        Reads events from the kernel. Blocks in blocking mode (default)
-        until any event arrives. Returns list of "Linux::Inotify2::Event"
-        objects or empty list if none (non-blocking mode) or error occured
-        ($! should be checked).
+    @events = $inotify->read
+        Reads events from the kernel. Blocks when the file descriptor is in
+        blocking mode (default) until any event arrives. Returns list of
+        "Linux::Inotify2::Event" objects or empty list if none (non-blocking
+        mode) or error occurred ($! should be checked).
+
+        Normally you shouldn't use this function, but instead use watcher
+        callbacks and call "->poll".
 
   The Linux::Inotify2::Event Class
-    Objects of this class are handed as first argument to the watch
+    Objects of this class are handed as first argument to the watcher
     callback. It has the following members and methods:
 
     $event->w
@@ -171,18 +175,18 @@ DESCRIPTION
 
     $event->name
     $event->{name}
-        The path of the filesystem object, relative to the watch name.
+        The path of the file system object, relative to the watched name.
 
-    $watch->fullname
+    $event->fullname
         Returns the "full" name of the relevant object, i.e. including the
-        "name" member of the watcher (if the the watch is on a directory and
-        a dir entry is affected), or simply the "name" member itself when
-        the object is the watch object itself.
+        "name" member of the watcher (if the watch object is on a directory
+        and a directory entry is affected), or simply the "name" member
+        itself when the object is the watch object itself.
 
     $event->mask
     $event->{mask}
-        The received event mask. In addition the the events described for
-        "$inotify-"watch>, the following flags (exported by default) can be
+        The received event mask. In addition to the events described for
+        "$inotify->watch", the following flags (exported by default) can be
         set:
 
          IN_ISDIR             event object is a directory
@@ -190,13 +194,14 @@ DESCRIPTION
 
          # when any of the following flags are set,
          # then watchers for this event are automatically canceled
-         IN_UNMOUNT           filesystem for watch'ed object was unmounted
+         IN_UNMOUNT           filesystem for watched object was unmounted
          IN_IGNORED           file was ignored/is gone (no more events are delivered)
          IN_ONESHOT           only one event was generated
 
     $event->IN_xxx
-        Returns a boolean that returns true if the event mask matches the
-        event. All of the "IN_xxx" constants can be used as methods.
+        Returns a boolean that returns true if the event mask contains any
+        events specified by the mask. All of the "IN_xxx" constants can be
+        used as methods.
 
     $event->cookie
     $event->{cookie}
@@ -207,7 +212,7 @@ DESCRIPTION
         file.
 
   The Linux::Inotify2::Watch Class
-    Watch objects are created by calling the "watch" method of a notifier.
+    Watcher objects are created by calling the "watch" method of a notifier.
 
     It has the following members and methods:
 
@@ -227,7 +232,7 @@ DESCRIPTION
         changed.
 
     $watch->cancel
-        Cancels/removes this watch. Future events, even if already queued
+        Cancels/removes this watcher. Future events, even if already queued
         queued, will not be handled and resources will be freed.
 
 SEE ALSO

@@ -3,6 +3,11 @@ Revision history for Linux::Inotify2
 TODO: document move/renaming issues for fullname
 TODO: find_watchers($path), or maybe just ->watchers
 
+1.22 Tue Jun 14 08:34:38 CEST 2011
+	- use a more useful definition of IN_xxx methods - any bits, not
+          a match. (pointed out by Anatoliy Grishayev).
+        - slightly reworked the documentation.
+
 1.21 Mon Sep 21 10:07:07 CEST 2009
 	- fix a couple of typoes, as pointed out by Grant McLean.
         - rely on common::sense for stricter namespace checking.
